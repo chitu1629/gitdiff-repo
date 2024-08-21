@@ -1,0 +1,493 @@
+NEXUS
+--------
+need java 11
+port 8081
+4 vCPU and 4GB memory needed
+nexus processes should run as nexus user
+
+download nexus repo OSS package
+unzip downloaded file
+create a service file (nexus.service)
+<public-ip>:8081
+sign in with username admin and pwd generated from pwd file
+
+https://help.sonatype.com/en/download.html
+https://help.sonatype.com/en/run-as-a-service.html
+https://www.youtube.com/watch?v=jtbmtSTnGZo&list=PL8klaCXyIuQ7T2-p2T8UU_2zqlVfkUk3O&index=4&pp=iAQB
+https://www.youtube.com/watch?v=YARrewGcVHc  --> storing docker img to nexus
+try this --> https://epma.medium.com/install-sonatype-nexus-3-on-ubuntu-20-04-lts-562f8ba20b98
+https://www.youtube.com/watch?v=fpDuMLHExL4   --> imp (start nexus with nexus user)
+https://www.youtube.com/watch?v=WHFbPGMQv20  --> install nexus
+
+create nexus user
+-----------------
+adduser nexus
+passwd nexus  --> change pwd of nexus user
+visudo  --> add --> nexus ALL=(ALL) NOPASSWD: ALL
+go to /opt   (go and change the user)
+  chown -R nexus:nexus nexus
+  chown -R nexus:nexus sonatype-work
+go to /opt/nexus/bin --> open nexus.rc  --> run_as_user="nexus"    (uncomment this)
+go to /opt/nexus/etc  --> open nexus-default.properties  (for the port number)
+to start and stop --> go to /opt/nexus/bin/nexus  
+vi /etc/systemd/system/nexus.service
+sudo apt-get update
+sudo - nexus
+service nexus start
+service nexus status
+systemctl enable nexus
+systemctl start nexus
+systemctl restart nexus
+systemctl status nexus
+
+open nexus in browser
+cat /opt/sonatype-work/nexus3/admin.password   --> to get the default pwd
+
+
+
+chdsut1629
+
+
+
+
+5d7741e2-807f-3972-ad26-5f0934ce59ef
+nuget setapikey 5d7741e2-807f-3972-ad26-5f0934ce59ef -source http://4.232.64.219:8081/repository/{repository name}/
+
+
+
+docker tag sonatype/nexus3:latest 4.232.64.219:8081/docker-repo/nexus:1
+
+
+
+
+
+REFERENCES:
+for pushing docker img to nexus:
+https://www.coachdevops.com/2020/08/how-to-configure-nexus-3-as-docker.html
+https://www.coachdevops.com/2020/02/how-to-upload-docker-images-into-nexus.html
+https://www.coachdevops.com/2021/02/automate-docker-builds-using-jenkins.html   --> using jenkins
+
+
+
+
+
+
+
+
+
+
+
+
+
+pipeline {
+    agent any
+    tools{ 
+        maven 'maven_3_5_0' 
+    } 
+    // environment {
+    //     //imageName = "myphpapp"
+    //     registryCredentials = "nexus"
+    //     registry = "4.232.64.219:8085"
+    //     dockerImage = ''
+    // }
+
+
+
+    stages {
+        stage('checkout') {
+            steps {
+                checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Java-Techie-jt/devops-automation']]]) 
+            }
+        }
+        stage('mvn install') {
+            steps {
+                sh 'mvn clean install' 
+            }
+        }
+        stage('docker img build') {
+            steps {
+                sh 'docker build -t 4.232.64.219:8085/mypythonimage${BUILD_NUMBER} .'
+            }
+        }
+        stage('docker login') {
+            steps {
+                withCredentials([usernameColonPassword(credentialsId: 'docker-login', variable: 'docker')]) {
+                sh 'docker login -u admin -p chdsut1629 4.232.64.219:8085'
+            }
+            }
+        }
+        stage('docker push') {
+            steps {
+                withCredentials([usernameColonPassword(credentialsId: 'nexus', variable: 'nexus')]) {
+                sh 'docker push 4.232.64.219:8085/mypythonimage${BUILD_NUMBER}'
+            }
+        }
+    }
+}
+}
+
+
+
+
+updated:
+pipeline {
+    agent any
+    tools{ 
+        maven 'maven_3_5_0' 
+    } 
+
+
+    stages {
+        stage('checkout') {
+            steps {
+                checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Java-Techie-jt/devops-automation']]]) 
+            }
+        }
+        stage('mvn install') {
+            steps {
+                sh 'mvn clean install' 
+            }
+        }
+        stage('docker img build') {
+            steps {
+                sh 'docker build -t 4.232.64.219:8085/mypythonimage${BUILD_NUMBER} .'
+            }
+        }
+        stage('docker login') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'docker-login', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                sh 'docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD 4.232.64.219:8085'
+            }
+            }
+        }
+        stage('docker push') {
+            steps {
+                withCredentials([usernameColonPassword(credentialsId: 'nexus', variable: 'nexus')]) {
+                sh 'docker push 4.232.64.219:8085/mypythonimage${BUILD_NUMBER}'
+            }
+        }
+    }
+}
+}
+
+
+
+
+updated 2:
+----------
+store nexus credentials as username and password --> choose conjoined and give any variables while creating pipeline syntax
+store docker registry login credentials as username and password  --> choose separated and give any variables while creating pipeline syntax
+store ip address as secret text
+
+pipeline {
+    agent any
+    tools{ 
+        maven 'maven_3_5_0' 
+    } 
+
+
+    stages {
+        stage('checkout') {
+            steps {
+                checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Java-Techie-jt/devops-automation']]]) 
+            }
+        }
+        stage('mvn install') {
+            steps {
+                sh 'mvn clean install' 
+            }
+        }
+        stage('docker img build') {
+            steps {
+                withCredentials([string(credentialsId: 'ip', variable: 'DOCKER_REGISTRY_IP')]) {
+                    sh 'docker build -t ${DOCKER_REGISTRY_IP}:8085/mypythonimage${BUILD_NUMBER} .'
+                }
+            }
+        }
+        stage('docker login') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'docker-login', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                    withCredentials([string(credentialsId: 'ip', variable: 'DOCKER_REGISTRY_IP')]) {
+                        sh 'docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ${DOCKER_REGISTRY_IP}:8085'
+                    }
+            }
+            }
+        }
+        stage('docker push') {
+            steps {
+                withCredentials([usernameColonPassword(credentialsId: 'nexus', variable: 'nexus')]) {
+                    withCredentials([string(credentialsId: 'ip', variable: 'DOCKER_REGISTRY_IP')]) {
+                        sh 'docker push ${DOCKER_REGISTRY_IP}:8085/mypythonimage${BUILD_NUMBER}'
+                    }
+            }
+        }
+    }
+}
+}
+
+
+
+
+-------------------
+
+updated 4
+-----------
+pipeline {
+    agent any
+    tools{ 
+        maven 'maven_3_5_0' 
+    } 
+
+
+    stages {
+        stage('checkout') {
+            steps {
+                checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Java-Techie-jt/devops-automation']]]) 
+            }
+        }
+        stage('mvn install') {
+            steps {
+                sh 'mvn clean install' 
+            }
+        }
+        stage('docker img build') {
+            steps {
+                withCredentials([string(credentialsId: 'ip', variable: 'DOCKER_REGISTRY_IP')]) {
+                    withCredentials([string(credentialsId: 'port', variable: 'DOCKER_REGISTRY_PORT')]) {
+                        sh 'docker build -t ${DOCKER_REGISTRY_IP}:${DOCKER_REGISTRY_PORT}/mypythonimage${BUILD_NUMBER} .'
+                    }
+                }
+            }
+        }
+        stage('docker login') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'docker-login', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                    withCredentials([string(credentialsId: 'ip', variable: 'DOCKER_REGISTRY_IP')]) {
+                        withCredentials([string(credentialsId: 'port', variable: 'DOCKER_REGISTRY_PORT')]) {
+                            sh 'docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ${DOCKER_REGISTRY_IP}:${DOCKER_REGISTRY_PORT}'
+                        }
+                    }
+            }
+            }
+        }
+        stage('docker push') {
+            steps {
+                withCredentials([usernameColonPassword(credentialsId: 'nexus', variable: 'nexus')]) {
+                    withCredentials([string(credentialsId: 'ip', variable: 'DOCKER_REGISTRY_IP')]) {
+                        withCredentials([string(credentialsId: 'port', variable: 'DOCKER_REGISTRY_PORT')]) {
+                            sh 'docker push ${DOCKER_REGISTRY_IP}:${DOCKER_REGISTRY_PORT}/mypythonimage${BUILD_NUMBER}'
+                        }
+                    }
+            }
+        }
+    }
+}
+}
+
+
+
+
+withCredentials([string(credentialsId: 'ip', variable: 'DOCKER_REGISTRY_IP'), string(credentialsId: 'port', variable: 'DOCKER_REGISTRY_PORT')]) {
+
+withCredentials([usernamePassword(credentialsId: 'docker-registry-credentials-id', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+
+
+
+
+
+
+
+--------------------------------------
+
+
+final docker script
+---------------------
+
+
+pipeline {
+    agent any
+    tools{ 
+        maven 'maven_3_5_0' 
+    } 
+
+
+    stages {
+        stage('checkout') {
+            steps {
+                checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Java-Techie-jt/devops-automation']]]) 
+            }
+        }
+        stage('mvn install') {
+            steps {
+                sh 'mvn clean install' 
+            }
+        }
+        stage('docker img build') {
+            steps {
+                withCredentials([string(credentialsId: 'ip', variable: 'DOCKER_REGISTRY_IP'), string(credentialsId: 'port', variable: 'DOCKER_REGISTRY_PORT')]) {
+                        sh 'docker build -t ${DOCKER_REGISTRY_IP}:${DOCKER_REGISTRY_PORT}/mypythonimage${BUILD_NUMBER} .'
+                    
+                }
+            }
+        }
+        stage('docker login') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'docker-login', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                    withCredentials([string(credentialsId: 'ip', variable: 'DOCKER_REGISTRY_IP'), string(credentialsId: 'port', variable: 'DOCKER_REGISTRY_PORT')]) {
+                            sh 'docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ${DOCKER_REGISTRY_IP}:${DOCKER_REGISTRY_PORT}'
+                        
+                    }
+            }
+            }
+        }
+        stage('docker push') {
+            steps {
+                withCredentials([usernameColonPassword(credentialsId: 'nexus', variable: 'nexus')]) {
+                    withCredentials([string(credentialsId: 'ip', variable: 'DOCKER_REGISTRY_IP'), string(credentialsId: 'port', variable: 'DOCKER_REGISTRY_PORT')]) {
+                            sh 'docker push ${DOCKER_REGISTRY_IP}:${DOCKER_REGISTRY_PORT}/mypythonimage${BUILD_NUMBER}'
+                        
+                    }
+            }
+        }
+    }
+}
+}
+
+
+--------------------------------------------------------------------------------------
+
+
+
+curl -v -u admin:chdsut1629 --upload-file /home/azureuser/sample.txt 4.232.64.219:8081/repository/mda-storage/test/samplefromjenkins.txt
+
+
+
+----------------------------------------------------------------
+
+
+FINAL SCRIPT
+--------------------
+
+pipeline {
+    agent any
+    tools{ 
+        maven 'maven_3_5_0' 
+    } 
+
+
+    stages {
+        stage('checkout') {
+            steps {
+                checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Java-Techie-jt/devops-automation']]]) 
+            }
+        }
+        stage('mvn install') {
+            steps {
+                sh 'mvn clean install' 
+            }
+        }
+        stage('docker img build') {
+            steps {
+                withCredentials([string(credentialsId: 'ip', variable: 'DOCKER_REGISTRY_IP'), string(credentialsId: 'port', variable: 'DOCKER_REGISTRY_PORT')]) {
+                        sh 'docker build -t ${DOCKER_REGISTRY_IP}:${DOCKER_REGISTRY_PORT}/mypythonimage${BUILD_NUMBER} .'
+                    
+                }
+            }
+        }
+        stage('docker login') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'docker-login', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                    withCredentials([string(credentialsId: 'ip', variable: 'DOCKER_REGISTRY_IP'), string(credentialsId: 'port', variable: 'DOCKER_REGISTRY_PORT')]) {
+                            sh 'docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ${DOCKER_REGISTRY_IP}:${DOCKER_REGISTRY_PORT}'
+                        
+                    }
+                }
+            }
+        }
+        stage('docker push') {
+            steps {
+                withCredentials([usernameColonPassword(credentialsId: 'nexus', variable: 'nexus')]) {
+                    withCredentials([string(credentialsId: 'ip', variable: 'DOCKER_REGISTRY_IP'), string(credentialsId: 'port', variable: 'DOCKER_REGISTRY_PORT')]) {
+                            sh 'docker push ${DOCKER_REGISTRY_IP}:${DOCKER_REGISTRY_PORT}/mypythonimage${BUILD_NUMBER}'
+                    }
+                }
+            }
+        
+        }
+        stage('MDA file push') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'nexus', passwordVariable: 'NEXUS_PASSWORD', usernameVariable: 'NEXUS_USERNAME')]) {
+                    withCredentials([string(credentialsId: 'ip', variable: 'DOCKER_REGISTRY_IP'), string(credentialsId: 'nexus-port', variable: 'NEXUS_PORT')]) {
+                        sh 'curl -v -u ${NEXUS_USERNAME}:${NEXUS_PASSWORD} --upload-file /home/azureuser/sample.txt ${DOCKER_REGISTRY_IP}:${NEXUS_PORT}/repository/mda-storage/test/samplefromjenkins-${BUILD_NUMBER}.txt'
+                    }
+                    
+                }
+            }
+        }
+    }
+}
+
+
+
+
+----------------------------------
+
+FINAL 1
+------
+
+pipeline {
+    agent any
+    tools{ 
+        maven 'maven_3_5_0' 
+    } 
+
+
+    stages {
+        stage('checkout') {
+            steps {
+                checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Java-Techie-jt/devops-automation']]]) 
+            }
+        }
+        stage('mvn install') {
+            steps {
+                sh 'mvn clean install' 
+            }
+        }
+        stage('docker img build') {
+            steps {
+                withCredentials([string(credentialsId: 'ip', variable: 'DOCKER_REGISTRY_IP'), string(credentialsId: 'port', variable: 'DOCKER_REGISTRY_PORT')]) {
+                        sh 'docker build -t ${DOCKER_REGISTRY_IP}:${DOCKER_REGISTRY_PORT}/mypythonimage${BUILD_NUMBER} .'
+                    
+                }
+            }
+        }
+        stage('docker login') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'docker-login', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                    withCredentials([string(credentialsId: 'ip', variable: 'DOCKER_REGISTRY_IP'), string(credentialsId: 'port', variable: 'DOCKER_REGISTRY_PORT')]) {
+                            sh 'docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ${DOCKER_REGISTRY_IP}:${DOCKER_REGISTRY_PORT}'
+                        
+                    }
+                }
+            }
+        }
+        stage('docker push') {
+            steps {
+                    withCredentials([string(credentialsId: 'ip', variable: 'DOCKER_REGISTRY_IP'), string(credentialsId: 'port', variable: 'DOCKER_REGISTRY_PORT')]) {
+                            sh 'docker push ${DOCKER_REGISTRY_IP}:${DOCKER_REGISTRY_PORT}/mypythonimage${BUILD_NUMBER}'
+                    }
+			}
+        }
+        stage('MDA file push') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'nexus', passwordVariable: 'NEXUS_PASSWORD', usernameVariable: 'NEXUS_USERNAME')]) {
+                    withCredentials([string(credentialsId: 'ip', variable: 'DOCKER_REGISTRY_IP'), string(credentialsId: 'nexus-port', variable: 'NEXUS_PORT')]) {
+                        sh 'curl -v -u ${NEXUS_USERNAME}:${NEXUS_PASSWORD} --upload-file /home/azureuser/sample.txt ${DOCKER_REGISTRY_IP}:${NEXUS_PORT}/repository/mda-storage/test/samplefromjenkins-${BUILD_NUMBER}.txt'
+                    }
+                    
+                }
+            }
+        }
+    }
+}
+
