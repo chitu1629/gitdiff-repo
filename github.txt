@@ -1,0 +1,113 @@
+github commands
+-----------------
+Reference: https://education.github.com/git-cheat-sheet-education.pdf
+
+
+USER INFORMATION:
+1) git config --global user.name "[username_of_the_github]"   |   to connect github account to the local windows machine
+2) git config --global user.email "[mail_of_the_github]"      |   to connect github account to the local windows machine
+3) git config --list                                          |   displays the username and email
+3) git init                                                   |   creating a workspace for a new repo. creates a .git foler which is a hidden folder 
+4) git clone                                                  |   cloning a existing repo from remote to the local windows machine
+
+STAGE & SNAPSHOT:
+5) git status                                                 |   like  "What's going on?". tells if there is any file is changed or new file is added.it tells to commit the file.
+6) git add [file_name]                                        |   selecting the specific files that will be stored in the local git project
+7) git add .                                                  |   selecting all the files
+8) git restore --staged <file name>                           |   to remove the file from staging area
+8) git commit -m "[any_msg]"                                  |   this will save the added files in the local git repo
+9) git reset [file_name]                                      |   opposite to "git add" command. the stored file in the git project will become un-stored
+10)git diff                                                   |   1st change any content in the existing file. "git diff" cmd is used to show the difference between the (changed file) working directory and commited file content. will not work after the "git commit" cmd
+11)git diff --staged                                          |   will givr the difference between the commited content and added after using "git add" cmd
+
+git diff            --> difference between before "git add" cmd and commited content
+git diff --staged   --> difference between after "git add" cmd and commited content
+
+BRANCH & MERGE:
+12)git branch                                                 |   tells the current branch that we are working highlighted with green txt and also display the available branches
+13)git branch [new_branch_name]                               |   creates a new branch in git project which is in local windows machine
+14)git checkout [any_existing_branch]                         |   switch to the other branch
+15)git merge                                                  |   update the change made in branch1 to the main branch
+
+History:
+16)git log                                                    |   gives all the commit details. gives the history of who, what and when the changes were made. to come out of the log, press "q"
+16)git commit --oneline                                       |   gives all the commit messages 
+17)git log --follow [file_name]                               |   gives the details of the commited files with the commit msg
+18)git log branch1..branch2                                   |
+19)git diff branch1..branch2                                  |   gives the difference between the 2 branches regarding the files
+20)git show                                                   |   gives the last commited file details
+21)git show [commit_ID]                                       |   gives all the details abt the specific commit. to get the commit ID use "git log"
+29)git blame [file_name]                                      |   shows who modified the file
+
+TRACKING PATH CHANGES:
+22)git rm [file_name]                                         |   removes the created file from the local repo & not from the remote repo(github). 
+23)git mv [existing_file_name] [new_file_name]                |   renaming the file in local repo
+24)git log --stat -M                                          |   "git log" displays the commit details. "--stat" displays more information abt the commits. "-M" displays which files were renamed.
+
+TEMPORARY COMMITS:
+25)git stash                                                  |   hiding a file to avoid from commiting (temporarily commits) & this will delete the file from the local repo and moves to the stash. before using this command use "git add ."
+26)git stash list                                             |   gives the list of available stash
+27)git stash pop                                              |   deletes the file from stash lists and make the file available in the local repo
+28)git stash drop                                             |   deletes the file from stash lists
+
+
+REVERTING CHANGES:
+29)git reset [file_name]                                      |   this command will be used after "git add ." this cmd brings the file to unstage.
+30)
+
+	git push -u origin master
+
+
+
+25)git remote rm origin
+26)git remote remove origin
+27)git remote -v
+28)git remote
+29)git remote rename origin newName
+30)git remote set-url origin [git_url]
+
+
+
+
+-------------------------------------------------------------------------------------------------------------------
+NOTE:
+1) if a file starts with a "dot", then it is a hidden folder. to view all hidden & non-hidden files --> use cmd "ls -a"
+
+
+Git - version ctrl system
+version ctrl (tracks & manages the files) can undo the changes, revisiting the earlier the versions of files, compare the changes (time travel back to older versions of files)
+
+git - runs locally in machine
+github - hosts the git repositories in web browser
+
+.git folder  --> creates when "git init" cmd is given. all git commands will be executed only when there is a .git folder
+
+atomic commits: break down the commits for asingle file. commit the changes made in the files separately.
+give commit msg in present tense in imperative style
+
+.gitignore file
+-----------------
+.gitignore file  ---> to store credentials, secrets. even if the repo is in public, the credentials will not be displayed to the people. this will store only in our local.
+we can ignore files and folders too.
+give ".file_name" to the .gitignore file
+give "foler_name/" to the .gitignore file
+give "*.log" , will ignore all the files with the extension .log
+
+
+
+
+------------------------
+
+If you've stored a personal access token (PAT) or password in Git credentials manager and you want to remove it, you can use the following steps:
+
+Open the Windows Credential Manager:
+
+Press Windows + R to open the Run dialog.
+Type control keymgr.dll and press Enter.
+In the Credential Manager window, navigate to the section where Git credentials are stored. This may be under "Windows Credentials" or "Generic Credentials."
+
+Look for the credentials related to the Git repository or server where you stored the PAT or password.
+
+Select the credential entry and click "Remove" or "Delete."
+
+---------------------------------------

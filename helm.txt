@@ -1,0 +1,31 @@
+HELM
+--------
+is a package manager for Kubernetes
+simplifies the deployment and management of applications within Kubernetes clusters
+helm will be top of k8s
+pre-requisite: k8s cluster
+
+HELM CHART
+-----------
+Helm makes deploying complex applications easy by packaging them into charts. Users don't need to manually create and manage multiple Kubernetes manifests.
+includes templates (in YAML/ GO lang) for K8S manifests that define the resources needed to run an appln, such as deployments, services, & configurations
+
+A release is an instance of a chart running in a Kubernetes cluster. Each time a chart is installed in a cluster, a new release is created. 
+Releases are named and can be managed independently.
+"helm install" cmd creates a new release in the k8s cluster
+
+INSTALLATION OF THE HELM CHART
+-------------------------------
+REF: https://helm.sh/docs/intro/install/
+$ curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+$ chmod 700 get_helm.sh
+$ ./get_helm.sh
+
+
+
+
+COMMANDS
+---------
+helm create helloworld  --> create helm chart (after creating this chart, by default helpers.tpl, values.yaml, deployment.yaml, service.yaml, etc will be present)
+helm install my-app ./my-chart  (my-app --> relese name)
+helm uninstall my-app
